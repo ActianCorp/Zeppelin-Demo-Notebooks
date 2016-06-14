@@ -1,0 +1,373 @@
+{
+  "paragraphs": [
+    {
+      "text": "%md\n## Steps to load: ##\n 1. Load **source** CSV into Spark SQL temp table (**bank**)\n 2. Create **target** Spark SQL temp table (**bank_in_vector**) by linking it to an existing table in Vector\n 3. Insert data from source table to target table (**bank** -\u003e **bank_in_vector**)\n 4. Read data from vector (**bank_in_vector**)",
+      "dateUpdated": "May 5, 2016 9:41:21 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 52.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "enabled": true,
+        "editorMode": "ace/mode/markdown",
+        "editorHide": true,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099879_-1338165393",
+      "id": "20160429-044459_131456017",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003ch2\u003eSteps to load:\u003c/h2\u003e\n\u003col\u003e\n\u003cli\u003eLoad \u003cstrong\u003esource\u003c/strong\u003e CSV into Spark SQL temp table (\u003cstrong\u003ebank\u003c/strong\u003e)\u003c/li\u003e\n\u003cli\u003eCreate \u003cstrong\u003etarget\u003c/strong\u003e Spark SQL temp table (\u003cstrong\u003ebank_in_vector\u003c/strong\u003e) by linking it to an existing table in Vector\u003c/li\u003e\n\u003cli\u003eInsert data from source table to target table (\u003cstrong\u003ebank\u003c/strong\u003e -\u003e \u003cstrong\u003ebank_in_vector\u003c/strong\u003e)\u003c/li\u003e\n\u003cli\u003eRead data from vector (\u003cstrong\u003ebank_in_vector\u003c/strong\u003e)\u003c/li\u003e\n\u003c/ol\u003e\n"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:41:21 PM",
+      "dateFinished": "May 5, 2016 9:41:21 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Load Source CSV into Spark (DataFrame -\u003e Temp Table)",
+      "text": "// Options for Spark CSV loader listed at https://github.com/databricks/spark-csv/blob/master/README.md\nsqlContext.load(\"com.databricks.spark.csv\", Map(\n    \"path\" -\u003e \"/tmp/bank-full.csv\", \"header\" -\u003e \"true\", \"delimiter\" -\u003e \";\")\n    ).registerTempTable(\"bank\")\n",
+      "dateUpdated": "May 5, 2016 9:41:21 PM",
+      "config": {
+        "colWidth": 12.0,
+        "title": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "enabled": true,
+        "editorMode": "ace/mode/scala",
+        "editorHide": false,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099882_-1339319640",
+      "id": "20160429-044459_1227961852",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "warning: there were 1 deprecation warning(s); re-run with -deprecation for details\n"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:41:21 PM",
+      "dateFinished": "May 5, 2016 9:41:22 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Create target temp table link to Vector table",
+      "text": "%sql\n\nCREATE TEMPORARY TABLE bank_in_vector USING com.actian.spark_vector.sql.DefaultSource\nOPTIONS ( host \"localhost\", user \"actian\", password \"actian\", instance \"VW\", database \"sample\", table \"bank\"  )",
+      "dateUpdated": "May 5, 2016 9:41:21 PM",
+      "config": {
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/scala",
+        "graph": {
+          "mode": "table",
+          "height": 121.0,
+          "optionOpen": false,
+          "keys": [
+            {
+              "name": "null",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          ],
+          "values": [],
+          "groups": [],
+          "scatter": {
+            "xAxis": {
+              "name": "null",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          }
+        },
+        "enabled": true,
+        "editorHide": false,
+        "tableHide": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099882_-1339319640",
+      "id": "20160429-044459_46903253",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TABLE",
+        "msg": "null\n"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:41:22 PM",
+      "dateFinished": "May 5, 2016 9:41:22 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Insert Data from Spark Temp to Vector",
+      "text": "%sql\n\nINSERT INTO bank_in_vector SELECT age, job, marital,education,balance FROM bank\n\n",
+      "dateUpdated": "May 5, 2016 9:41:22 PM",
+      "config": {
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/scala",
+        "graph": {
+          "mode": "table",
+          "height": 141.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "enabled": true,
+        "editorHide": false,
+        "tableHide": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099882_-1339319640",
+      "id": "20160429-044459_1278639605",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TABLE",
+        "msg": "null\n"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:41:22 PM",
+      "dateFinished": "May 5, 2016 9:41:24 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Read from Vector",
+      "text": "%sql \nselect age, count(1) value\nfrom bank_in_vector\nwhere age \u003c 40 \ngroup by age\norder by age",
+      "dateUpdated": "May 5, 2016 9:41:22 PM",
+      "config": {
+        "colWidth": 6.0,
+        "graph": {
+          "mode": "multiBarChart",
+          "height": 182.0,
+          "optionOpen": false,
+          "keys": [
+            {
+              "name": "age",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          ],
+          "values": [
+            {
+              "name": "value",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          ],
+          "groups": [],
+          "scatter": {
+            "yAxis": {
+              "name": "value",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          }
+        },
+        "enabled": true,
+        "editorHide": false,
+        "editorMode": "ace/mode/sql",
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099882_-1339319640",
+      "id": "20160429-044459_1407097851",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TABLE",
+        "msg": "age\tvalue\n18\t24\n19\t70\n20\t100\n21\t158\n22\t258\n23\t404\n24\t604\n25\t1054\n26\t1610\n27\t1818\n28\t2076\n29\t2370\n30\t3514\n31\t3992\n32\t4170\n33\t3944\n34\t3860\n35\t3788\n36\t3612\n37\t3392\n38\t2932\n39\t2974\n"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:41:23 PM",
+      "dateFinished": "May 5, 2016 9:41:24 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Read From Spark",
+      "text": "%sql \nselect age, count(1) value\nfrom bank_in_vector\nwhere age \u003c 40 \ngroup by age \norder by age",
+      "dateUpdated": "May 5, 2016 9:58:57 PM",
+      "config": {
+        "colWidth": 6.0,
+        "graph": {
+          "mode": "multiBarChart",
+          "height": 182.0,
+          "optionOpen": false,
+          "keys": [
+            {
+              "name": "age",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          ],
+          "values": [
+            {
+              "name": "value",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          ],
+          "groups": [],
+          "scatter": {
+            "xAxis": {
+              "name": "age",
+              "index": 0.0,
+              "aggr": "sum"
+            },
+            "yAxis": {
+              "name": "value",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          }
+        },
+        "enabled": true,
+        "editorHide": false,
+        "editorMode": "ace/mode/sql",
+        "title": true
+      },
+      "settings": {
+        "params": {
+          "maxAge": "35"
+        },
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099882_-1339319640",
+      "id": "20160429-044459_327207593",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TABLE",
+        "msg": "age\tvalue\n18\t48\n19\t140\n20\t200\n21\t316\n22\t516\n23\t808\n24\t1208\n25\t2108\n26\t3220\n27\t3636\n28\t4152\n29\t4740\n30\t7028\n31\t7984\n32\t8340\n33\t7888\n34\t7720\n35\t7576\n36\t7224\n37\t6784\n38\t5864\n39\t5948\n"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:58:57 PM",
+      "dateFinished": "May 5, 2016 9:58:58 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%md\n\nAbout bank data\n\n```\nCitation Request:\n  This dataset is public available for research. The details are described in [Moro et al., 2011]. \n  Please include this citation if you plan to use this database:\n\n  [Moro et al., 2011] S. Moro, R. Laureano and P. Cortez. Using Data Mining for Bank Direct Marketing: An Application of the CRISP-DM Methodology. \n  In P. Novais et al. (Eds.), Proceedings of the European Simulation and Modelling Conference - ESM\u00272011, pp. 117-121, Guimarães, Portugal, October, 2011. EUROSIS.\n\n  Available at: [pdf] http://hdl.handle.net/1822/14838\n                [bib] http://www3.dsi.uminho.pt/pcortez/bib/2011-esm-1.txt\n```",
+      "dateUpdated": "May 5, 2016 9:41:22 PM",
+      "config": {
+        "colWidth": 12.0,
+        "editorHide": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "enabled": true,
+        "editorMode": "ace/mode/markdown"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099883_-1339704389",
+      "id": "20160429-044459_350890871",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003cp\u003eAbout bank data\u003c/p\u003e\n\u003cpre\u003e\u003ccode\u003eCitation Request:\n  This dataset is public available for research. The details are described in [Moro et al., 2011]. \n  Please include this citation if you plan to use this database:\n\n  [Moro et al., 2011] S. Moro, R. Laureano and P. Cortez. Using Data Mining for Bank Direct Marketing: An Application of the CRISP-DM Methodology. \n  In P. Novais et al. (Eds.), Proceedings of the European Simulation and Modelling Conference - ESM\u00272011, pp. 117-121, Guimarães, Portugal, October, 2011. EUROSIS.\n\n  Available at: [pdf] http://hdl.handle.net/1822/14838\n                [bib] http://www3.dsi.uminho.pt/pcortez/bib/2011-esm-1.txt\n\u003c/code\u003e\u003c/pre\u003e\n"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:41:22 PM",
+      "dateFinished": "May 5, 2016 9:41:22 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "dateUpdated": "May 5, 2016 9:41:22 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "enabled": true,
+        "editorHide": false,
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1461905099883_-1339704389",
+      "id": "20160429-044459_19562177",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT"
+      },
+      "dateCreated": "Apr 29, 2016 4:44:59 AM",
+      "dateStarted": "May 5, 2016 9:41:25 PM",
+      "dateFinished": "May 5, 2016 9:41:25 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    }
+  ],
+  "name": "CSV to Vector",
+  "id": "2BJWE1K8A",
+  "angularObjects": {
+    "2BKVX2NUK": [],
+    "2BHY9HTBN": [],
+    "2BMG2QWWA": [],
+    "2BHVD7N1T": [],
+    "2BJQ82YVD": [],
+    "2BMKC2V6D": [],
+    "2BM1Z25EZ": [],
+    "2BJAQP19E": [],
+    "2BKRAEFAD": [],
+    "2BMADBXG4": [],
+    "2BMSG27NT": [],
+    "2BM3F5UG3": [],
+    "2BM9FJYAY": [],
+    "2BM64YH5U": []
+  },
+  "config": {
+    "looknfeel": "default"
+  },
+  "info": {}
+}
