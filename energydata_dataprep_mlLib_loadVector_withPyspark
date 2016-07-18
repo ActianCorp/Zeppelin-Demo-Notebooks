@@ -164,5 +164,6 @@ sameModel = LinearRegressionModel.load(sc, "/user/zepplin/models/energy_demo_lr/
 # Score the model
 from numpy import array
 parsedTestData = energy_rdd_wo_kwh.map(lambda x: numpy.array(x))
+predictions = parsedTestData.map(lambda x: (sameModel.predict(x)))
 
 
