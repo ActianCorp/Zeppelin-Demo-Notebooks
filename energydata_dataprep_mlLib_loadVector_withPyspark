@@ -163,6 +163,7 @@ sameModel = LinearRegressionModel.load(sc, "/user/zepplin/models/energy_demo_lr/
 
 # Score the model
 from numpy import array
+energy_rdd_wo_kwh = sqlContext.sql("select groupid, year, month, day from energy_ssql2").rdd
 parsedTestData = energy_rdd_wo_kwh.map(lambda x: numpy.array(x))
 predictions = parsedTestData.map(lambda x: (sameModel.predict(x)))
 
