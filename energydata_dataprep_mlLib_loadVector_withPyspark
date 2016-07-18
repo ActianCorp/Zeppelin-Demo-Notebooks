@@ -1,0 +1,168 @@
+
+"""
+------------------------------------------
+Under construction
+Zeppelin notebook to come
+------------------------------------------
+"""
+
+"""
+--------------------------------------------------------------------
+pyspark code
+--------------------------------------------------------------------
+"""
+
+
+# Using pyspark shell
+# This code reads a file from HDFS, performs some data
+# preparation, builds a linear regression, scores the model
+# and then loads the results into a VectorH table.
+
+
+
+# Create custom schema
+
+customSchema = StructType([ \
+    StructField("meterid", IntegerType(), True), \
+    StructField("dt", IntegerType(), True), \
+    StructField("kwh", DoubleType(), True)])
+
+
+
+# Load the data into a DataFrame with delimiter and custom schema
+
+energy_df = sqlContext.read.format('com.databricks.spark.csv').options(header='false', delimiter=' ').load('hdfs://usau-vm-demo-lead.datarush.local:8020/data/energy/zipped/File1.txt.bz2', schema = customSchema)
+
+
+
+# Register the DataFrame as a SQL table to facilitate easy manipulation.
+# A DataFrame is equivalent to a relational table in Spark SQL,
+# and can be created using various functions in SQLContext.
+
+sqlContext.registerDataFrameAsTable(energy_df, "energy_ssql")
+
+
+
+# Create four new columns (groupid, month, year, and day) and drop one (dt).
+# All in one go with Spark SQL! Save the results to a DataFrame. 
+# day is a boolean. 0 if it is nightime and 1 if daytime. I named the column poorly.
+
+energy_df2 = sqlContext.sql("select meterid, floor(meterid/100) as groupid, \
+	month(date_add(to_date('2008-12-31'), int(substring(dt,0,3)))) as month, \
+	year(date_add(to_date('2008-12-31'), int(substring(dt,0,3)))) as year, \
+	IF(IF(int(substring(dt,3,2))*30/60>24, 0, int(substring(dt,3,2))*30/60)<9 or IF(int(substring(dt,3,2))*30/60>24, 0, int(substring(dt,3,2))*30/60)>=21 , false, true)  as day, float(kwh) as kwh \
+	from energy_ssql")
+
+
+
+# Register the new DataFrame as a new Spark SQL table
+
+sqlContext.registerDataFrameAsTable(energy_df2, "energy_ssql2")
+
+
+# Go to Actian Director and create a table in VectorH with the same 
+# schema. I called it energy_spark.
+
+
+
+# This next bit creates a Spark SQL temp table (energy_tt) 
+# that is a proxy/pointer to the VectorH table (energy_spark).
+
+sqlContext.sql("create temporary table energy_tt using com.actian.spark_vector.sql.DefaultSource options ( host 'rushcluster-worker1.datarush.local', user 'actian', password 'actian', instance 'V5', database 'demo', table 'energy_spark' )")
+
+
+# Loading energy_tt from the final Spark SQL table actually loads 
+# the VectorH table energy_spark
+
+sqlContext.sql("insert into energy_tt select * from energy_ssql2")
+
+
+# This syntax works in VectorH but not here via Spark SQL.
+# It does not push down the SQL.
+# Something is going on here with Hive but I am not sure what.
+# The error message says, "Unsupported language features in 
+# query: delete from energy_tt ... org.apache.spark.sql.hive.HiveQl
+# $.nodeToPlan(HiveQl.scala:1217)"
+# From apache, "For a SQLContext, the only dialect available is “sql” 
+# which uses a simple SQL parser provided by Spark SQL. In a HiveContext,
+# the default is “hiveql”, though “sql” is also available. Since the HiveQL
+# parser is much more complete, this is recommended for most use cases".
+
+sqlContext.sql("delete from energy_tt")
+
+
+# Go to Actian Director and create a new table with meterid and avg(kwh)
+
+
+# Pointer for the new table
+
+sqlContext.sql("create temporary table energy_tt2 using com.actian.spark_vector.sql.DefaultSource options ( host 'rushcluster-worker1.datarush.local', user 'actian', password 'actian', instance 'V5', database 'demo', table 'energy_spark2' )")
+
+
+
+# Get the count of the VectorH data
+# Why is the first call so much faster then the second?
+# Does this have anything to do with VectorH or is it just Spark SQL
+# or is the cluster tuning still not right?
+
+sqlContext.sql("select * from energy_tt2").count()
+
+energy_df.count()
+
+
+
+
+
+
+---------------------------------------------------
+Linear Regression
+---------------------------------------------------
+
+# spark.mllib contains the original API built on top of RDDs.
+# spark.ml provides higher-level API built on top of DataFrames 
+# for constructing ML pipelines.
+# see https://spark.apache.org/docs/1.6.1/mllib-linear-methods.html#linear-least-squares-lasso-and-ridge-regression 
+# for more information
+
+from pyspark.mllib.regression import LabeledPoint, LinearRegressionWithSGD, LinearRegressionModel
+
+
+# Save the latest DataFrame as an RDD with the dependent variable in 
+# the first position
+
+energy_rdd = sqlContext.sql("select kwh, groupid, year, month, day from energy_ssql2").rdd
+
+
+
+# Use the LabeledPoint class to format the data for the predictive model
+
+parsedData = = energy_rdd.map(lambda x:LabeledPoint(x[0], x[1:]))
+
+
+
+# Build the model
+
+model = LinearRegressionWithSGD.train(parsedData, iterations=10, step=0.00000001)
+
+
+
+# Evaluation the model
+
+valuesAndPreds = parsedData.map(lambda p: (p.label, model.predict(p.features)))
+MSE = valuesAndPreds.map(lambda (v, p): (v - p)**2).reduce(lambda x, y: x + y) / valuesAndPreds.count()
+print("Mean Squared Error = " + str(MSE))
+
+
+
+# Save and load model
+
+model.save(sc, "/user/zepplin/models/energy_demo_lr/")
+
+sameModel = LinearRegressionModel.load(sc, "/user/zepplin/models/energy_demo_lr/")
+
+
+# Score the model
+from numpy import array
+parsedTestData = energy_rdd_wo_kwh.map(lambda x: numpy.array(x))
+
+
